@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <script src="./FuroSDK.js"></script>
+  </head>
+  <body>
+    <script>
+      window.Furo.init({
+        // Your client id
+        clientId: "",
+        // Your redirect uri
+        redirectUri: "http://localhost:8080",
+      }).then((user) => {
+        if (!user) return;
+        console.log(user);
+        document.getElementById("data").innerHTML = JSON.stringify(
+          user,
+          null,
+          2
+        );
+      });
+      function login() {
+        window.Furo.loginWithRedirect();
+      }
+    </script>
+    <button type="button" onclick="login()">Login</button>
+    <div
+      id="data"
+      style="
+        background-color: black;
+        color: white;
+        margin-top: 60px;
+        width: 1400px;
+        white-space: pre;
+      "
+    ></div>
+  </body>
+</html>
