@@ -12,7 +12,7 @@ async function init(options) {
 
   try {
     if (await handleRedirectCallback()) {
-      console.log("login success");
+      console.log('login success');
     }
 
     const user = await getUser();
@@ -35,12 +35,12 @@ function decodeBase64(base64String) {
   return atob(base64String);
 }
 
-const AUTH_DOMAIN = "https://auth.furo.one";
+const AUTH_DOMAIN = 'https://auth.furo.one';
 const CODE_RE = /[?&]code=[^&]+/;
 
 function getFuroLoginURL() {
   if (!FuroClientId)
-    throw new Error("ClientId needed to get the Furo login url");
+    throw new Error('ClientId needed to get the Furo login url');
 
   const baseUrl = `${AUTH_DOMAIN}/login/${FuroClientId}`;
   if (FuroRedirectUri)
@@ -65,21 +65,21 @@ function logout() {
 async function handleRedirectCallback(url = window.location.search) {
   if (!hasAuthParams(url)) return false;
 
-  console.log("Handle Login Start");
+  console.log('Handle Login Start');
 
   const params = new URLSearchParams(url);
-  const code = params.get("code");
+  const code = params.get('code');
   const data = await fetch(`https://api.furo.one/sessions/code/authenticate`, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify({ code }),
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   }).then((res) => res.json());
 
   const { access_token: accessToken, refresh_token: refreshToken } = data;
 
-  const base64Payload = accessToken.split(".")[1];
+  const base64Payload = accessToken.split('.')[1];
   const { pid } = JSON.parse(decodeBase64(base64Payload));
   if (!pid) return false;
 
@@ -104,15 +104,16 @@ async function refreshTokenSilently() {
   if (!refreshToken) return null;
   const accessToken = localStorage.getItem(`furo-${FuroClientId}-token`);
   if (!accessToken) return null;
-  const { data } = await axios.post(
-    `/sessions/token/refresh`,
-    {
+  const data = await fetch(`https://api.furo.one/sessions/token/refresh`, {
+    method: 'POST',
+    body: JSON.stringify({
       accessToken,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${refreshToken}`,
     },
-    {
-      headers: { Authorization: `Bearer ${refreshToken}` },
-    }
-  );
+  }).then((res) => res.json());
   const { access_token, refresh_token } = data;
   localStorage.setItem(`furo-${FuroClientId}-token`, access_token);
   localStorage.setItem(`furo-${FuroClientId}-refresh`, refresh_token);
