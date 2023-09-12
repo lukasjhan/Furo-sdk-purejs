@@ -4,11 +4,59 @@ console.log(
 
 let FuroClientId;
 let FuroRedirectUri;
+let FuroPublicApikey;
+let modalContainer;
+
+function initLoginModal() {
+  modalContainer = document.createElement('div');
+  modalContainer.id = 'furo-login-modal';
+  modalContainer.style.display = 'none';
+  modalContainer.style.position = 'fixed';
+  modalContainer.style.alignItems = 'center';
+  modalContainer.style.justifyContent = 'center';
+  modalContainer.style.top = '0';
+  modalContainer.style.left = '0';
+  modalContainer.style.width = '100%';
+  modalContainer.style.height = '100%';
+  modalContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+  modalContainer.style.justifyContent = 'center';
+  modalContainer.style.alignItems = 'center';
+  modalContainer.style.zIndex = '1000';
+
+  // Create the modal content
+  const modalContent = document.createElement('div');
+  modalContent.style.backgroundColor = '#fff';
+  modalContent.style.width = '500px';
+  modalContent.style.height = 'fit-content';
+  modalContent.style.margin;
+  modalContent.style.padding = '20px';
+  modalContent.style.borderRadius = '5px';
+  modalContent.style.boxShadow = '0px 0px 10px rgba(0, 0, 0, 0.2)';
+  modalContent.innerHTML = `
+  <h2>Welcome to Furo</h2>
+  <form id="loginForm">
+    <label for="email">Email:</label>
+    <input type="email" id="furo-email" name="email" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="furo-password" name="password" required>
+    <br>
+    <button type="submit">Login</button>
+  </form>
+`;
+
+  // Append the modal components to the document body
+  document.body.appendChild(modalContainer);
+  modalContainer.appendChild(modalContent);
+}
 
 async function init(options) {
-  const { clientId, redirectUri } = options;
+  const { clientId, redirectUri, apikey } = options;
   FuroClientId = clientId;
   FuroRedirectUri = redirectUri;
+  FuroPublicApikey = apikey;
+
+  initLoginModal();
 
   try {
     if (await handleRedirectCallback()) {
@@ -35,6 +83,11 @@ function decodeBase64(base64String) {
   return atob(base64String);
 }
 
+function encodeBase64(base64String) {
+  return btoa(base64String);
+}
+
+const API_SERVER = 'https://api.furo.one';
 const AUTH_DOMAIN = 'https://auth.furo.one';
 const CODE_RE = /[?&]code=[^&]+/;
 
@@ -51,6 +104,53 @@ function getFuroLoginURL() {
 function loginWithRedirect() {
   const loginUrl = getFuroLoginURL();
   window.location.href = loginUrl;
+}
+
+async function loginWithPopup() {
+  console.log('popup!');
+  modalContainer.style.display = 'flex';
+  return new Promise((resolve) => {
+    document
+      .getElementById('loginForm')
+      .addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        // Get API key
+        const BasicAuth = btoa(`${FuroClientId}:${FuroPublicApikey}`);
+
+        // Get email and password values
+        const email = document.getElementById('furo-email').value;
+        const password = document.getElementById('furo-password').value;
+
+        // Create an object with email and password
+        const data = {
+          email: email,
+          password: password,
+          projectId: FuroClientId,
+          requireExtraCode: false,
+        };
+
+        console.log(data);
+
+        // Make a POST request to your authentication endpoint
+        const response = await fetch(`${API_SERVER}/passwords/authenticate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Basic ${BasicAuth}`,
+          },
+          body: JSON.stringify(data),
+        }).then((res) => res.json());
+        console.log(response);
+        closeLoginPopup();
+        resolve(response);
+      });
+  });
+}
+
+function closeLoginPopup() {
+  console.log('close popup!');
+  modalContainer.style.display = 'none';
 }
 
 function hasAuthParams(searchParams = window.location.search) {
@@ -124,6 +224,8 @@ window.Furo = {
   AUTH_DOMAIN,
   init,
   loginWithRedirect,
+  loginWithPopup,
+  closeLoginPopup,
   handleRedirectCallback,
   logout,
   getUser,

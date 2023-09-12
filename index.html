@@ -6,20 +6,27 @@
     <script>
       window.Furo.init({
         // Your client id
-        clientId: "",
+        clientId: 'c749045ea41d74bb701786c07223928b',
         // Your redirect uri
-        redirectUri: "http://localhost:8080",
+        redirectUri: 'http://localhost:8080',
+        // Your API key
+        apikey: 'apikey-public-live-64f427c6-007c-49f5-a11a-281e6e5ad84d',
       }).then((user) => {
         if (!user) return;
         console.log(user);
-        document.getElementById("data").innerHTML = JSON.stringify(
+        document.getElementById('data').innerHTML = JSON.stringify(
           user,
           null,
           2
         );
       });
-      function login() {
-        window.Furo.loginWithRedirect();
+      async function login() {
+        const user = await window.Furo.loginWithPopup();
+        document.getElementById('data').innerHTML = JSON.stringify(
+          user,
+          null,
+          2
+        );
       }
     </script>
     <button type="button" onclick="login()">Login</button>
